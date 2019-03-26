@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <cstdlib>
 #include <cerrno>
+#include <cmath>
 #include <cstring>
 #include <sys/ioctl.h>
 #include <fcntl.h>
@@ -12,6 +13,7 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Float32MultiArray.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
 
 #include <linux/i2c-dev.h>
 #include <smbus_functions.h>
@@ -86,6 +88,11 @@ class MappyDotPlusActivity {
     // class variables
     uint32_t seq = 0;
     int file;
+    sensor_msgs::PointField pointfield_x;
+    sensor_msgs::PointField pointfield_y;
+    sensor_msgs::PointField pointfield_z;
+    sensor_msgs::PointCloud2 msg_points;
+    std_msgs::Float32MultiArray msg_ranges;
 
     // ROS parameters
     std::string param_frame_id;
@@ -101,8 +108,8 @@ class MappyDotPlusActivity {
     ros::NodeHandle nh_priv;
 
     // ROS publishers
-    ros::Publisher pub_ranges;
     ros::Publisher pub_points;
+    ros::Publisher pub_ranges;
 
     // ROS subscribers
 };

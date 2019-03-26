@@ -41,6 +41,18 @@ MappyDotPlusActivity::MappyDotPlusActivity(ros::NodeHandle &_nh, ros::NodeHandle
         ROS_ERROR("size of yaw parameter must match size of address parameter");
 	ros::shutdown();
     }
+
+    msg_ranges.data.clear();
+    msg_ranges.data.resize(param_address.size(), 0.0);
+
+    msg_points.header.frame_id = param_frame_id;
+
+    sensor_msgs::PointCloud2Modifier modifier(msg_points);
+    modifier.setPointCloud2Fields(3,
+        "x", 1, sensor_msgs::PointField::FLOAT32,
+        "y", 1, sensor_msgs::PointField::FLOAT32,
+        "z", 1, sensor_msgs::PointField::FLOAT32);
+    modifier.resize(param_address.size());
 }
 
 // ******** private methods ******** //
@@ -62,6 +74,7 @@ bool MappyDotPlusActivity::start() {
     ROS_INFO("starting");
 
     if(!pub_ranges) pub_ranges = nh.advertise<std_msgs::Float32MultiArray>("ranges", 1);
+    if(!pub_points) pub_points = nh.advertise<sensor_msgs::PointCloud2>("points", 1);
 
     file = open(param_device.c_str(), O_RDWR);
     if(ioctl(file, I2C_SLAVE, param_address[0]) < 0) {
@@ -87,15 +100,41 @@ bool MappyDotPlusActivity::spinOnce() {
     double range;
     int error;
 
+    double point_x, point_y, point_z;
+
+    msg_points.header.seq = seq;
+
+    sensor_msgs::PointCloud2Iterator<float> iter_x(msg_points, "x");
+    sensor_msgs::PointCloud2Iterator<float> iter_y(msg_points, "y");
+    sensor_msgs::PointCloud2Iterator<float> iter_z(msg_points, "z");
+
+    msg_ranges.data.clear();
+
     for(int i=0; i < param_address.size(); i++) {
     	if(ioctl(file, I2C_SLAVE, param_address[i]) < 0) {
             ROS_WARN_THROTTLE(2, "error setting slave address");
             return false;
         }
+
 	range = (double)(int16_t)__bswap_16(_i2c_smbus_read_word_data(file, MAPPYDOT_PLUS_REG_DISTANCE));
-	error = (uint8_t)(_i2c_smbus_read_byte_data(file, MAPPYDOT_PLUS_REG_READ_ERROR_CODE));
-	ROS_WARN_STREAM("sensor " << i << " range " << range << " error " << error);
+
+	msg_ranges.data.push_back(range / 1000.0);
+
+	point_x = param_x[i] + range * std::cos(param_yaw[i]) / 1000.0;
+	point_y = param_y[i] + range * std::sin(param_yaw[i]) / 1000.0;
+	point_z = param_z[i];
+
+	*(iter_x) = point_x;
+	*(iter_y) = point_y;
+	*(iter_z) = point_z;
+
+	++iter_x;
+	++iter_y;
+	++iter_z;
     }
+
+    pub_ranges.publish(msg_ranges);
+    pub_points.publish(msg_points);
 
     return true;    
 }
