@@ -72,6 +72,12 @@
 #define MAPPYDOT_PLUS_RANGE_MED                                   (0x6d)
 #define MAPPYDOT_PLUS_RANGE_LONG                                  (0x6c)
 
+#define MAPPYDOT_PLUS_LED_ON 0x6f
+#define MAPPYDOT_PLUS_LED_OFF 0x66
+#define MAPPYDOT_PLUS_LED_THRESHOLD 0x74
+#define MAPPYDOT_PLUS_LED_PWM 0x70
+#define MAPPYDOT_PLUS_LED_MEASUREMENT 0x6D
+
 namespace tof_mappydot_plus {
 
 class MappyDotPlusActivity {

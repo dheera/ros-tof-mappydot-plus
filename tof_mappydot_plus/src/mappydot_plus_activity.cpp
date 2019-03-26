@@ -63,7 +63,11 @@ bool MappyDotPlusActivity::reset() {
             ROS_WARN_THROTTLE(2, "error setting slave address");
             return false;
         }
-    	_i2c_smbus_write_byte_data(file, MAPPYDOT_PLUS_REG_RANGING_MEASUREMENT_MODE, MAPPYDOT_PLUS_RANGE_LONG);
+
+	ros::Duration(0.025).sleep();
+    	_i2c_smbus_write_byte_data(file, MAPPYDOT_PLUS_REG_RANGING_MEASUREMENT_MODE, MAPPYDOT_PLUS_RANGE_SHORT);
+	ros::Duration(0.025).sleep();
+    	_i2c_smbus_write_byte_data(file, MAPPYDOT_PLUS_REG_SET_LED_MODE, MAPPYDOT_PLUS_LED_OFF);
     }
     return true;
 }
